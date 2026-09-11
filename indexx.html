@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Executive Suite & Cash Flow Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Glassmorphism & Custom Scrollbars */
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(31, 41, 55, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(75, 85, 99, 0.5);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(107, 114, 128, 0.8);
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #invoiceModal, #invoiceModal * {
+                visibility: visible;
+            }
+            #invoiceModal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white !important;
+                color: black !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- TOP GLOBAL NAVIGATION BAR -->
+    <header class="glass-panel sticky top-0 z-40 border-b border-slate-800/80 px-4 py-3 flex items-center justify-between shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="bg-gradient-to-tr from-indigo-600 to-violet-500 p-2 rounded-xl shadow-md shadow-indigo-500/20">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-none bg-gradient-to-r from-white via-slate-200 to-indigo-200 bg-clip-text text-transparent">
+                    Executive Suite
+                </h1>
+                <p class="text-xs text-slate-400 font-medium">Financial & Operational Hub</p>
+            </div>
+        </div>
+
+        <!-- App Screen Navigation Tabs -->
+        <nav class="hidden md:flex items-center space-x-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+            <button onclick="switchScreen(1)" id="nav-btn-1" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 text-slate-400 hover:text-white">
+                <i data-lucide="home" class="w-3.5 h-3.5"></i>
+                <span>Welcome</span>
+            </button>
+            <button onclick="switchScreen(2)" id="nav-btn-2" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 text-slate-400 hover:text-white">
+                <i data-lucide="grid" class="w-3.5 h-3.5"></i>
+                <span>Main Menu</span>
+            </button>
+            <button onclick="switchScreen(3)" id="nav-btn-3" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 text-slate-400 hover:text-white">
+                <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
+                <span>Cash Flow</span>
+            </button>
+            <button onclick="switchScreen(4)" id="nav-btn-4" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 text-slate-400 hover:text-white">
+                <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                <span>Notes & Tasks</span>
+            </button>
+            <button onclick="switchScreen(5)" id="nav-btn-5" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 text-slate-400 hover:text-white">
+                <i data-lucide="line-chart" class="w-3.5 h-3.5"></i>
+                <span>Charts & Calendar</span>
+            </button>
+        </nav>
+
+        <!-- Actions & Data Import/Export -->
+        <div class="flex items-center space-x-2">
+            <button onclick="openPinModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-300 flex items-center space-x-1 transition" title="Security PIN Lock">
+                <i data-lucide="lock" class="w-3.5 h-3.5 text-indigo-400"></i>
+                <span class="hidden sm:inline">Lock App</span>
+            </button>
+            <button onclick="exportDataJSON()" class="px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-300 flex items-center space-x-1 transition" title="Export Backup JSON">
+                <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span class="hidden sm:inline">Backup</span>
+            </button>
+            <label class="px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-300 flex items-center space-x-1 transition cursor-pointer" title="Import JSON Data">
+                <i data-lucide="upload" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span class="hidden sm:inline">Restore</span>
+                <input type="file" id="importFile" accept=".json" onchange="importDataJSON(event)" class="hidden">
+            </label>
+            <button onclick="confirmResetData()" class="px-2 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-medium text-rose-400 transition" title="Clear All Data">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN VIEWS CONTAINER -->
+    <main class="flex-1 p-4 md:p-6 max-w-7xl w-full mx-auto relative overflow-x-hidden">
+
+        <!-- ================================================================= -->
+        <!-- SCREEN 1: HOME PAGE INTRODUCTION / WELCOME SCREEN                 -->
+        <!-- ================================================================= -->
+        <section id="screen-1" class="app-screen min-h-[80vh] flex flex-col justify-center items-center text-center relative rounded-3xl overflow-hidden p-8 border border-slate-800/60 shadow-2xl">
+            <!-- Dynamic Background Container -->
+            <div id="welcomeBg" class="absolute inset-0 bg-gradient-to-br from-indigo-950/60 via-slate-950 to-slate-900 bg-cover bg-center transition-all duration-700"></div>
+            <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"></div>
+
+            <div class="relative z-10 max-w-2xl space-y-6">
+                <div class="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-medium">
+                    <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+                    <span>Ready for Entry & Management</span>
+                </div>
+
+                <h1 id="welcomeHeading" class="text-4xl md:text-6xl font-black tracking-tight text-white uppercase">
+                    WELCOME <span class="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent" id="userNameDisplay">XY</span>!
+                </h1>
+
+                <p class="text-slate-300 text-base md:text-lg max-w-xl mx-auto leading-relaxed">
+                    Your complete Business Management Suite. Streamline cash flow tracking, manage operational notes, view yearly financial analytics, and organize schedule logs.
+                </p>
+
+                <!-- Background Image & Custom Name Settings -->
+                <div class="pt-4 flex flex-wrap justify-center items-center gap-3 no-print">
+                    <input type="text" id="userNameInput" placeholder="Enter Your Name / Business Title" onchange="updateUserName(this.value)" class="bg-slate-900/90 border border-slate-700 text-xs rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition w-64 shadow-inner">
+                    <label class="bg-slate-900/90 border border-slate-700 hover:bg-slate-800 text-xs text-slate-300 px-4 py-2.5 rounded-xl cursor-pointer transition flex items-center space-x-1.5 shadow-sm">
+                        <i data-lucide="image" class="w-4 h-4 text-indigo-400"></i>
+                        <span>Set BG Image</span>
+                        <input type="file" accept="image/*" onchange="uploadWelcomeBg(event)" class="hidden">
+                    </label>
+                </div>
+
+                <div class="pt-6">
+                    <button onclick="switchScreen(2)" class="group relative inline-flex items-center justify-center px-8 py-3.5 text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl shadow-lg shadow-indigo-600/30 hover:shadow-indigo-600/50 hover:scale-[1.02] transition-all duration-200">
+                        <span>PROCEED</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================================================================= -->
+        <!-- SCREEN 2: MAIN HOMEPAGE / NAVIGATION HUB                          -->
+        <!-- ================================================================= -->
+        <section id="screen-2" class="app-screen hidden space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center space-x-2">
+                        <span>Main Homepage</span>
+                    </h2>
+                    <p class="text-xs text-slate-400">Select an operational module to open statement inputs, business tools, or charts.</p>
+                </div>
+                <!-- Security Passcode Quick Status -->
+                <div id="pinStatusBadge" class="self-start md:self-auto px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-400 flex items-center space-x-2">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+                    <span>PIN Security Active</span>
+                </div>
+            </div>
+
+            <!-- Navigation Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Card 1: Cash Flow Statements -->
+                <div onclick="switchScreen(3)" class="glass-panel p-6 rounded-3xl border border-slate-800 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/10 transition-all cursor-pointer group flex flex-col justify-between h-64 relative overflow-hidden">
+                    <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all"></div>
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform mb-4">
+                            <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white group-hover:text-indigo-300 transition-colors">CASH FLOW STATEMENTS</h3>
+                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                            Log monthly expenses and revenue with auto-calculated totals, receipt uploads, invoice printer, and category distribution charts.
+                        </p>
+                    </div>
+                    <div class="flex items-center text-xs font-semibold text-indigo-400 group-hover:translate-x-1 transition-transform">
+                        <span>Open Cash Flow Statements</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
+                    </div>
+                </div>
+
+                <!-- Card 2: Business Notes -->
+                <div onclick="switchScreen(4)" class="glass-panel p-6 rounded-3xl border border-slate-800 hover:border-violet-500/50 hover:shadow-xl hover:shadow-violet-500/10 transition-all cursor-pointer group flex flex-col justify-between h-64 relative overflow-hidden">
+                    <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-violet-500/10 rounded-full blur-2xl group-hover:bg-violet-500/20 transition-all"></div>
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-violet-400 group-hover:scale-110 transition-transform mb-4">
+                            <i data-lucide="notebook-pen" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white group-hover:text-violet-300 transition-colors">BUSINESS NOTES</h3>
+                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                            Searchable notes drawer, integrated interactive checklist items, operational priorities, and categorized tag boards.
+                        </p>
+                    </div>
+                    <div class="flex items-center text-xs font-semibold text-violet-400 group-hover:translate-x-1 transition-transform">
+                        <span>Open Notes Workspace</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
+                    </div>
+                </div>
+
+                <!-- Card 3: Charts & Schedule -->
+                <div onclick="switchScreen(5)" class="glass-panel p-6 rounded-3xl border border-slate-800 hover:border-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/10 transition-all cursor-pointer group flex flex-col justify-between h-64 relative overflow-hidden">
+                    <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform mb-4">
+                            <i data-lucide="trending-up" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white group-hover:text-emerald-300 transition-colors">CHARTS & CALENDAR</h3>
+                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                            Yearly progress graph, 12-month saved cash flow records archive, and interactive Google/Apple style schedule calendar.
+                        </p>
+                    </div>
+                    <div class="flex items-center text-xs font-semibold text-emerald-400 group-hover:translate-x-1 transition-transform">
+                        <span>View Analytics & Calendar</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Key Business Metrics Banner -->
+            <div class="glass-panel p-6 rounded-3xl border border-slate-800 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+                    <p class="text-xs font-medium text-slate-400">Total YTD Revenue</p>
+                    <p id="kpiYtdRevenue" class="text-xl md:text-2xl font-bold text-emerald-400 mt-1">₱0.00</p>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+                    <p class="text-xs font-medium text-slate-400">Total YTD Expenses</p>
+                    <p id="kpiYtdExpenses" class="text-xl md:text-2xl font-bold text-rose-400 mt-1">₱0.00</p>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+                    <p class="text-xs font-medium text-slate-400">Net Business Equity</p>
+                    <p id="kpiNetEquity" class="text-xl md:text-2xl font-bold text-indigo-400 mt-1">₱0.00</p>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+                    <p class="text-xs font-medium text-slate-400">Profit Margin</p>
+                    <p id="kpiProfitMargin" class="text-xl md:text-2xl font-bold text-amber-400 mt-1">0.0%</p>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================================================================= -->
+        <!-- SCREEN 3: CASH FLOW STATEMENTS                                    -->
+        <!-- ================================================================= -->
+        <section id="screen-3" class="app-screen hidden space-y-6">
+            <!-- Header Controls & Month Switcher -->
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Cash Flow Statements</h2>
+                    <p class="text-xs text-slate-400">All prices and titles are fully editable and calculate live totals automatically.</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Month Selector -->
+                    <div class="flex items-center space-x-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
+                        <i data-lucide="calendar" class="w-4 h-4 text-indigo-400"></i>
+                        <span class="text-xs text-slate-400">Active Month:</span>
+                        <select id="activeMonthSelect" onchange="changeActiveMonth(this.value)" class="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <button onclick="autoFillRecurring()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center space-x-1.5 transition">
+                        <i data-lucide="repeat" class="w-3.5 h-3.5 text-indigo-400"></i>
+                        <span>Auto-Fill Recurring</span>
+                    </button>
+
+                    <button onclick="saveAndArchiveCurrentMonth()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-semibold flex items-center space-x-1.5 shadow-md shadow-indigo-600/20 transition">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        <span>Archive & Lock Month</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tables Container: EXPENSE & REVENUE Side-by-Side -->
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+                <!-- 1. EXPENSE TABLE -->
+                <div class="glass-panel p-5 rounded-3xl border border-slate-800 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-rose-400 flex items-center space-x-2">
+                                <i data-lucide="arrow-down-right" class="w-5 h-5"></i>
+                                <span>EXPENSES</span>
+                            </h3>
+                            <button onclick="addEntryRow('expense')" class="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center space-x-1 transition">
+                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                <span>Add Expense</span>
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="text-slate-400 border-b border-slate-800/80">
+                                        <th class="pb-2 font-semibold w-24">DATE</th>
+                                        <th class="pb-2 font-semibold">TITLE</th>
+                                        <th class="pb-2 font-semibold w-28">CATEGORY</th>
+                                        <th class="pb-2 font-semibold w-28 text-right">PRICE (₱)</th>
+                                        <th class="pb-2 font-semibold w-16 text-center">MEDIA</th>
+                                        <th class="pb-2 font-semibold w-10 text-center"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expenseTableBody" class="divide-y divide-slate-800/40">
+                                    <!-- Dynamic Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Expense Total Footer -->
+                    <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Expenses</span>
+                        <div class="bg-rose-500/10 border border-rose-500/30 px-4 py-2 rounded-xl">
+                            <span id="expenseTotalDisplay" class="text-lg font-bold text-rose-400">₱0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. REVENUE TABLE -->
+                <div class="glass-panel p-5 rounded-3xl border border-slate-800 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-emerald-400 flex items-center space-x-2">
+                                <i data-lucide="arrow-up-right" class="w-5 h-5"></i>
+                                <span>REVENUE</span>
+                            </h3>
+                            <button onclick="addEntryRow('revenue')" class="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center space-x-1 transition">
+                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                <span>Add Revenue</span>
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="text-slate-400 border-b border-slate-800/80">
+                                        <th class="pb-2 font-semibold w-24">DATE</th>
+                                        <th class="pb-2 font-semibold">TITLE</th>
+                                        <th class="pb-2 font-semibold w-28">CATEGORY</th>
+                                        <th class="pb-2 font-semibold w-28 text-right">PRICE (₱)</th>
+                                        <th class="pb-2 font-semibold w-16 text-center">INVOICE</th>
+                                        <th class="pb-2 font-semibold w-10 text-center"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="revenueTableBody" class="divide-y divide-slate-800/40">
+                                    <!-- Dynamic Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Revenue Total Footer -->
+                    <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Revenue</span>
+                        <div class="bg-emerald-500/10 border border-emerald-500/30 px-4 py-2 rounded-xl">
+                            <span id="revenueTotalDisplay" class="text-lg font-bold text-emerald-400">₱0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOWER SUMMARY ROW: Owner's Equity & Category Distribution -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- OWNER'S EQUITY PANEL -->
+                <div class="glass-panel p-6 rounded-3xl border border-slate-800 space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                        <i data-lucide="scale" class="w-5 h-5 text-indigo-400"></i>
+                        <span>Owner's Equity</span>
+                    </h3>
+
+                    <div class="space-y-3">
+                        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                            <span class="text-xs text-slate-400">TOTAL EXPENSES</span>
+                            <span id="equityTotalExpenses" class="text-sm font-bold text-rose-400">₱0.00</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                            <span class="text-xs text-slate-400">TOTAL REVENUES</span>
+                            <span id="equityTotalRevenues" class="text-sm font-bold text-emerald-400">₱0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30">
+                        <p class="text-xs text-indigo-300 font-medium">
+                            TOTAL OWNER'S EQUITY for <span id="equityMonthLabel" class="font-bold underline">Selected Month</span>
+                        </p>
+                        <p id="equityNetTotal" class="text-2xl font-black text-indigo-200 mt-1">₱0.00</p>
+                    </div>
+                </div>
+
+                <!-- RATIO DONUT CHART -->
+                <div class="glass-panel p-6 rounded-3xl border border-slate-800 flex flex-col items-center justify-center">
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Revenue vs Expense Ratio</h4>
+                    <div class="w-44 h-44 relative flex items-center justify-center">
+                        <canvas id="ratioChart"></canvas>
+                    </div>
+                    <p id="statusIndicatorText" class="text-xs text-center text-slate-400 mt-3 max-w-xs">
+                        Current Status: Awaiting statement entries...
+                    </p>
+                </div>
+
+                <!-- CATEGORY EXPENSE BREAKDOWN CHART -->
+                <div class="glass-panel p-6 rounded-3xl border border-slate-800 flex flex-col items-center justify-center">
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Expense Category Breakdown</h4>
+                    <div class="w-44 h-44 relative flex items-center justify-center">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================================================================= -->
+        <!-- SCREEN 4: BUSINESS NOTES & CHECKLIST                              -->
+        <!-- ================================================================= -->
+        <section id="screen-4" class="app-screen hidden space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Business Notes Hub</h2>
+                    <p class="text-xs text-slate-400">Organize memos, operational checklists, meeting logs, and urgent tasks.</p>
+                </div>
+                <button onclick="createNewNote()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center space-x-1.5 transition shadow-md shadow-indigo-600/20">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    <span>+ New Note</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[680px]">
+
+                <!-- Notes Drawer Sidebar (4 cols) -->
+                <div class="lg:col-span-4 glass-panel p-4 rounded-3xl border border-slate-800 flex flex-col space-y-3 h-full">
+                    <!-- Search Notes -->
+                    <div class="relative">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                        <input type="text" id="noteSearchInput" oninput="renderNotesList()" placeholder="Search notes..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                    </div>
+
+                    <!-- Notes List -->
+                    <div id="notesListContainer" class="flex-1 overflow-y-auto space-y-2 pr-1">
+                        <!-- Dynamic list items -->
+                    </div>
+                </div>
+
+                <!-- Active Note Editor (8 cols) -->
+                <div class="lg:col-span-8 glass-panel p-6 rounded-3xl border border-slate-800 flex flex-col justify-between h-full">
+                    <div class="space-y-4 flex-1 flex flex-col">
+                        <!-- Note Title & Priority Selector -->
+                        <div class="flex items-center space-x-3 border-b border-slate-800 pb-3">
+                            <input type="text" id="noteTitleInput" oninput="updateActiveNote()" placeholder="UNTITLED NOTE" class="bg-transparent text-xl font-bold text-white placeholder-slate-600 focus:outline-none w-full">
+
+                            <select id="notePrioritySelect" onchange="updateActiveNote()" class="bg-slate-900 border border-slate-700 text-xs text-slate-300 rounded-xl px-2.5 py-1.5 focus:outline-none">
+                                <option value="general">General</option>
+                                <option value="urgent">Urgent</option>
+                                <option value="idea">Idea</option>
+                                <option value="meeting">Meeting</option>
+                            </select>
+
+                            <button onclick="deleteActiveNote()" class="p-2 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition" title="Delete Note">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+
+                        <!-- Main Note Body -->
+                        <textarea id="noteContentInput" oninput="updateActiveNote()" placeholder="Write text or operational logs here..." class="w-full flex-1 bg-transparent text-slate-200 text-sm focus:outline-none resize-none leading-relaxed placeholder-slate-600"></textarea>
+
+                        <!-- Interactive Checklist Sub-Section -->
+                        <div class="pt-4 border-t border-slate-800/80 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold text-indigo-300 flex items-center space-x-1">
+                                    <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
+                                    <span>Task Checklist</span>
+                                </span>
+                                <button onclick="addChecklistItem()" class="text-xs text-indigo-400 hover:underline">+ Add Task</button>
+                            </div>
+                            <div id="noteChecklistContainer" class="space-y-1.5 max-h-36 overflow-y-auto">
+                                <!-- Dynamic checklists -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 text-right">
+                        <span id="noteSavedStatus" class="text-xs text-slate-500 italic">Saved automatically</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================================================================= -->
+        <!-- SCREEN 5: CHARTS & CALENDAR HUB                                   -->
+        <!-- ================================================================= -->
+        <section id="screen-5" class="app-screen hidden space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Yearly Analytics & Interactive Calendar</h2>
+                    <p class="text-xs text-slate-400">View annual progress graphs, saved monthly cash flow cards, and schedule events.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- LEFT COLUMN: Yearly Graph & Saved Monthly Cards (7 cols) -->
+                <div class="lg:col-span-7 space-y-6">
+
+                    <!-- Line Chart Container -->
+                    <div class="glass-panel p-6 rounded-3xl border border-slate-800 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                                <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
+                                <span>Yearly Cash Flow Progress</span>
+                            </h3>
+                            <span class="text-xs text-slate-400">Net Owner's Equity by Month</span>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="yearlyLineChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Saved Cards (12 Months Grid) -->
+                    <div class="space-y-3">
+                        <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider">Monthly Saved Records</h3>
+                        <div id="monthlySavedGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            <!-- Populated with 12 Month Cards -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: Interactive Hybrid Calendar (5 cols) -->
+                <div class="lg:col-span-5 glass-panel p-6 rounded-3xl border border-slate-800 space-y-4 flex flex-col justify-between">
+                    <div>
+                        <!-- Calendar Header -->
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                                <i data-lucide="calendar" class="w-4 h-4 text-indigo-400"></i>
+                                <span>Business Schedule</span>
+                            </h3>
+
+                            <div class="flex items-center space-x-2">
+                                <button onclick="changeCalMonth(-1)" class="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+                                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                                </button>
+                                <span id="calendarMonthYear" class="text-xs font-bold text-indigo-300">Month Year</span>
+                                <button onclick="changeCalMonth(1)" class="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+                                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Calendar Grid Header -->
+                        <div class="grid grid-cols-7 text-center text-[10px] font-bold text-slate-500 mb-2 uppercase">
+                            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                        </div>
+
+                        <!-- Calendar Days Grid -->
+                        <div id="calendarDaysGrid" class="grid grid-cols-7 gap-1 text-xs">
+                            <!-- Dynamic Day Cards -->
+                        </div>
+                    </div>
+
+                    <!-- Calendar Events Section -->
+                    <div class="pt-4 border-t border-slate-800 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-300">Events for <span id="selectedCalDateLabel" class="text-indigo-400">Today</span></span>
+                            <button onclick="addCalendarEventPrompt()" class="px-2.5 py-1 rounded-lg bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/30 text-xs font-semibold border border-indigo-500/30 transition">+ Add Event</button>
+                        </div>
+                        <div id="calendarEventsList" class="space-y-1.5 max-h-36 overflow-y-auto">
+                            <!-- Events populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+
+    <!-- ================================================================= -->
+    <!-- MODALS & POPUPS                                                   -->
+    <!-- ================================================================= -->
+
+    <!-- RECEIPT PREVIEW MODAL -->
+    <div id="receiptModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel p-6 rounded-3xl max-w-md w-full border border-slate-800 space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-white">Receipt Image Attached</h3>
+                <button onclick="closeReceiptModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div class="bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center max-h-80 p-2">
+                <img id="receiptModalImg" src="" alt="Receipt" class="max-h-72 object-contain rounded-xl">
+            </div>
+            <button onclick="closeReceiptModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 rounded-xl transition">Close</button>
+        </div>
+    </div>
+
+    <!-- INVOICE GENERATOR MODAL -->
+    <div id="invoiceModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 text-slate-100 p-8 rounded-3xl max-w-lg w-full border border-slate-800 space-y-6 shadow-2xl">
+            <div class="flex justify-between items-start border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-2xl font-black text-white">INVOICE</h2>
+                    <p class="text-xs text-indigo-400 font-semibold" id="invBusinessName">Business Suite XY</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-slate-400" id="invDate">Date: 2026-09-09</p>
+                    <p class="text-xs text-slate-400" id="invNumber">INV-00847</p>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="text-xs text-slate-400">Billed Item Description:</div>
+                <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-white text-base" id="invTitle">Item Title</p>
+                        <span class="text-xs px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300" id="invCategory">Category</span>
+                    </div>
+                    <p class="text-xl font-bold text-emerald-400" id="invAmount">₱0.00</p>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-4 flex justify-between items-center text-xs">
+                <span class="text-slate-400">Status: <strong class="text-emerald-400">PAID / RECORDED</strong></span>
+                <span class="text-slate-400">Authorized Signature</span>
+            </div>
+
+            <div class="flex justify-end space-x-3 no-print">
+                <button onclick="closeInvoiceModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-xs text-slate-300">Close</button>
+                <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs text-white font-semibold flex items-center space-x-1.5">
+                    <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                    <span>Print Invoice</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECURITY PIN MODAL -->
+    <div id="pinModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel p-6 rounded-3xl max-w-sm w-full border border-slate-800 space-y-4 text-center">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mx-auto">
+                <i data-lucide="lock" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white">Security Passcode Lock</h3>
+            <p class="text-xs text-slate-400">Set or enter a 4-digit PIN to secure your business dashboard.</p>
+            
+            <input type="password" id="pinInput" maxlength="4" placeholder="••••" class="w-36 text-center text-2xl tracking-widest bg-slate-900 border border-slate-700 rounded-xl py-2 text-white focus:outline-none focus:border-indigo-500 mx-auto block">
+
+            <div class="flex justify-center space-x-2 pt-2">
+                <button onclick="closePinModal()" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs rounded-xl">Cancel</button>
+                <button onclick="saveOrVerifyPin()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl">Submit</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================================================================= -->
+    <!-- APPLICATION LOGIC & JAVASCRIPT                                    -->
+    <!-- ================================================================= -->
+    <script>
+        // MONTH NAMES CONSTANT
+        const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        
+        // APP STATE (Zeroed initial state)
+        let appData = {
+            userName: "XY",
+            welcomeBgUrl: "",
+            securityPin: "",
+            activeMonthIndex: 8, // September (0-indexed)
+            statements: {}, // { monthIndex: { expenses: [], revenues: [] } }
+            notes: [],
+            activeNoteId: null,
+            calendarEvents: {} // { 'YYYY-MM-DD': [{ id, title, type }] }
+        };
+
+        // Initialize statements array for 12 months with ZERO entries
+        for (let i = 0; i < 12; i++) {
+            appData.statements[i] = { expenses: [], revenues: [] };
+        }
+
+        // Global Chart Instances
+        let ratioChartInstance = null;
+        let categoryChartInstance = null;
+        let yearlyLineChartInstance = null;
+
+        // Calendar Active Selection
+        let calCurrentYear = 2026;
+        let calCurrentMonth = 8; // Sept
+        let selectedCalDateKey = "2026-09-09";
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+            lucide.createIcons();
+            populateMonthDropdown();
+            initCharts();
+            renderAllScreens();
+        });
+
+        function renderAllScreens() {
+            // Screen 1 Setup
+            document.getElementById('userNameDisplay').innerText = appData.userName;
+            document.getElementById('userNameInput').value = appData.userName;
+            if (appData.welcomeBgUrl) {
+                document.getElementById('welcomeBg').style.backgroundImage = `url('${appData.welcomeBgUrl}')`;
+            }
+
+            // Render Active Cash Flow Month
+            renderCashFlowTables();
+            updateCalculationsAndCharts();
+            renderSavedMonthCards();
+
+            // Render Notes
+            renderNotesList();
+            renderActiveNote();
+
+            // Render Calendar
+            renderCalendar();
+
+            // PIN status
+            const pinBadge = document.getElementById('pinStatusBadge');
+            if (appData.securityPin) {
+                pinBadge.classList.remove('hidden');
+            } else {
+                pinBadge.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // SCREEN SWITCHING NAVIGATION
+        // ==========================================
+        function switchScreen(screenNum) {
+            document.querySelectorAll('.app-screen').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`screen-${screenNum}`).classList.remove('hidden');
+
+            // Tab Styling
+            for (let i = 1; i <= 5; i++) {
+                const btn = document.getElementById(`nav-btn-${i}`);
+                if (btn) {
+                    if (i === screenNum) {
+                        btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 bg-indigo-600 text-white shadow-sm";
+                    } else {
+                        btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 text-slate-400 hover:text-white";
+                    }
+                }
+            }
+
+            // Chart Resize Trigger on Screen Switch
+            if (screenNum === 3 || screenNum === 5) {
+                setTimeout(() => {
+                    if (ratioChartInstance) ratioChartInstance.resize();
+                    if (categoryChartInstance) categoryChartInstance.resize();
+                    if (yearlyLineChartInstance) yearlyLineChartInstance.resize();
+                }, 100);
+            }
+        }
+
+        function updateUserName(val) {
+            appData.userName = val || "XY";
+            document.getElementById('userNameDisplay').innerText = appData.userName;
+            saveToLocalStorage();
+        }
+
+        function uploadWelcomeBg(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    appData.welcomeBgUrl = e.target.result;
+                    document.getElementById('welcomeBg').style.backgroundImage = `url('${appData.welcomeBgUrl}')`;
+                    saveToLocalStorage();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // ==========================================
+        // CASH FLOW & FINANCIAL STATEMENTS (SCREEN 3)
+        // ==========================================
+        function populateMonthDropdown() {
+            const select = document.getElementById('activeMonthSelect');
+            select.innerHTML = '';
+            MONTH_NAMES.forEach((m, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.innerText = `${m} 2026`;
+                if (idx === appData.activeMonthIndex) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function changeActiveMonth(idx) {
+            appData.activeMonthIndex = parseInt(idx);
+            renderCashFlowTables();
+            updateCalculationsAndCharts();
+            saveToLocalStorage();
+        }
+
+        function renderCashFlowTables() {
+            const current = appData.statements[appData.activeMonthIndex] || { expenses: [], revenues: [] };
+
+            // Render Expenses
+            const expTbody = document.getElementById('expenseTableBody');
+            expTbody.innerHTML = '';
+            current.expenses.forEach((item, i) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-900/50 transition";
+                tr.innerHTML = `
+                    <td class="py-2"><input type="text" value="${item.date}" onchange="updateEntry('expense', ${i}, 'date', this.value)" class="bg-slate-900 border border-slate-800 rounded px-1.5 py-1 text-xs w-20 text-slate-300"></td>
+                    <td class="py-2"><input type="text" value="${item.title}" onchange="updateEntry('expense', ${i}, 'title', this.value)" placeholder="Expense Title" class="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs w-full text-white"></td>
+                    <td class="py-2">
+                        <select onchange="updateEntry('expense', ${i}, 'category', this.value)" class="bg-slate-900 border border-slate-800 rounded px-1.5 py-1 text-xs text-slate-300">
+                            <option ${item.category==='Supplies'?'selected':''}>Supplies</option>
+                            <option ${item.category==='Rent'?'selected':''}>Rent</option>
+                            <option ${item.category==='Payroll'?'selected':''}>Payroll</option>
+                            <option ${item.category==='Utility'?'selected':''}>Utility</option>
+                            <option ${item.category==='Marketing'?'selected':''}>Marketing</option>
+                            <option ${item.category==='Equipment'?'selected':''}>Equipment</option>
+                            <option ${item.category==='Other'?'selected':''}>Other</option>
+                        </select>
+                    </td>
+                    <td class="py-2 text-right"><input type="number" step="0.01" value="${item.price}" onchange="updateEntry('expense', ${i}, 'price', this.value)" class="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs w-24 text-right text-rose-400 font-semibold"></td>
+                    <td class="py-2 text-center">
+                        ${item.receiptImg ? 
+                            `<button onclick="viewReceipt('${item.receiptImg}')" class="text-xs text-indigo-400 hover:underline"><i data-lucide="image" class="w-4 h-4 inline"></i></button>` : 
+                            `<label class="cursor-pointer text-slate-500 hover:text-slate-300"><i data-lucide="paperclip" class="w-4 h-4 inline"></i><input type="file" accept="image/*" onchange="uploadReceipt('expense', ${i}, event)" class="hidden"></label>`}
+                    </td>
+                    <td class="py-2 text-center">
+                        <button onclick="removeEntryRow('expense', ${i})" class="text-slate-500 hover:text-rose-400"><i data-lucide="trash" class="w-3.5 h-3.5"></i></button>
+                    </td>
+                `;
+                expTbody.appendChild(tr);
+            });
+
+            // Render Revenues
+            const revTbody = document.getElementById('revenueTableBody');
+            revTbody.innerHTML = '';
+            current.revenues.forEach((item, i) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-900/50 transition";
+                tr.innerHTML = `
+                    <td class="py-2"><input type="text" value="${item.date}" onchange="updateEntry('revenue', ${i}, 'date', this.value)" class="bg-slate-900 border border-slate-800 rounded px-1.5 py-1 text-xs w-20 text-slate-300"></td>
+                    <td class="py-2"><input type="text" value="${item.title}" onchange="updateEntry('revenue', ${i}, 'title', this.value)" placeholder="Revenue Title" class="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs w-full text-white"></td>
+                    <td class="py-2">
+                        <select onchange="updateEntry('revenue', ${i}, 'category', this.value)" class="bg-slate-900 border border-slate-800 rounded px-1.5 py-1 text-xs text-slate-300">
+                            <option ${item.category==='Direct Sales'?'selected':''}>Direct Sales</option>
+                            <option ${item.category==='Services'?'selected':''}>Services</option>
+                            <option ${item.category==='Wholesale'?'selected':''}>Wholesale</option>
+                            <option ${item.category==='Investments'?'selected':''}>Investments</option>
+                            <option ${item.category==='Other'?'selected':''}>Other</option>
+                        </select>
+                    </td>
+                    <td class="py-2 text-right"><input type="number" step="0.01" value="${item.price}" onchange="updateEntry('revenue', ${i}, 'price', this.value)" class="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs w-24 text-right text-emerald-400 font-semibold"></td>
+                    <td class="py-2 text-center">
+                        <button onclick="generateInvoice('${item.title}', '${item.category}', ${item.price})" class="text-xs text-indigo-400 hover:underline"><i data-lucide="file-text" class="w-4 h-4 inline"></i></button>
+                    </td>
+                    <td class="py-2 text-center">
+                        <button onclick="removeEntryRow('revenue', ${i})" class="text-slate-500 hover:text-rose-400"><i data-lucide="trash" class="w-3.5 h-3.5"></i></button>
+                    </td>
+                `;
+                revTbody.appendChild(tr);
+            });
+
+            lucide.createIcons();
+        }
+
+        function addEntryRow(type) {
+            const current = appData.statements[appData.activeMonthIndex];
+            const defaultItem = type === 'expense' ? 
+                { date: '09/09/2026', title: 'New Expense', category: 'Supplies', price: 0, receiptImg: '' } :
+                { date: '09/09/2026', title: 'New Revenue', category: 'Direct Sales', price: 0 };
+
+            if (type === 'expense') current.expenses.push(defaultItem);
+            else current.revenues.push(defaultItem);
+
+            renderCashFlowTables();
+            updateCalculationsAndCharts();
+            saveToLocalStorage();
+        }
+
+        function updateEntry(type, index, field, value) {
+            const list = type === 'expense' ? appData.statements[appData.activeMonthIndex].expenses : appData.statements[appData.activeMonthIndex].revenues;
+            if (field === 'price') value = parseFloat(value) || 0;
+            list[index][field] = value;
+
+            updateCalculationsAndCharts();
+            saveToLocalStorage();
+        }
+
+        function removeEntryRow(type, index) {
+            if (type === 'expense') appData.statements[appData.activeMonthIndex].expenses.splice(index, 1);
+            else appData.statements[appData.activeMonthIndex].revenues.splice(index, 1);
+
+            renderCashFlowTables();
+            updateCalculationsAndCharts();
+            saveToLocalStorage();
+        }
+
+        function uploadReceipt(type, index, event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    appData.statements[appData.activeMonthIndex].expenses[index].receiptImg = e.target.result;
+                    renderCashFlowTables();
+                    saveToLocalStorage();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function viewReceipt(imgSrc) {
+            document.getElementById('receiptModalImg').src = imgSrc;
+            document.getElementById('receiptModal').classList.remove('hidden');
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('receiptModal').classList.add('hidden');
+        }
+
+        function autoFillRecurring() {
+            const current = appData.statements[appData.activeMonthIndex];
+            current.expenses.push(
+                { date: '01/09/2026', title: 'Shop Lease Rent', category: 'Rent', price: 15000, receiptImg: '' },
+                { date: '05/09/2026', title: 'Utilities & Electric', category: 'Utility', price: 3500, receiptImg: '' }
+            );
+            current.revenues.push(
+                { date: '10/09/2026', title: 'Monthly Retainer Client', category: 'Services', price: 25000 }
+            );
+            renderCashFlowTables();
+            updateCalculationsAndCharts();
+            saveToLocalStorage();
+        }
+
+        // ==========================================
+        // CALCULATIONS & CHART UPDATES
+        // ==========================================
+        function updateCalculationsAndCharts() {
+            const current = appData.statements[appData.activeMonthIndex];
+            
+            const totalExp = current.expenses.reduce((acc, curr) => acc + (parseFloat(curr.price) || 0), 0);
+            const totalRev = current.revenues.reduce((acc, curr) => acc + (parseFloat(curr.price) || 0), 0);
+            const netEquity = totalRev - totalExp;
+
+            // Format Peso Display
+            const fmt = (num) => '₱' + num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            document.getElementById('expenseTotalDisplay').innerText = fmt(totalExp);
+            document.getElementById('revenueTotalDisplay').innerText = fmt(totalRev);
+
+            document.getElementById('equityTotalExpenses').innerText = fmt(totalExp);
+            document.getElementById('equityTotalRevenues').innerText = fmt(totalRev);
+            document.getElementById('equityNetTotal').innerText = fmt(netEquity);
+            document.getElementById('equityMonthLabel').innerText = `${MONTH_NAMES[appData.activeMonthIndex]} 2026`;
+
+            // Status Text
+            const statusEl = document.getElementById('statusIndicatorText');
+            if (totalExp === 0 && totalRev === 0) {
+                statusEl.innerText = "Current Status: No entries recorded for this month.";
+            } else if (totalRev >= totalExp) {
+                statusEl.innerText = `Current Status: Revenue dominant (+${fmt(netEquity)})`;
+                statusEl.className = "text-xs text-center text-emerald-400 font-semibold mt-3 max-w-xs";
+            } else {
+                statusEl.innerText = `Current Status: Expenses dominant (-${fmt(Math.abs(netEquity))})`;
+                statusEl.className = "text-xs text-center text-rose-400 font-semibold mt-3 max-w-xs";
+            }
+
+            // Update Ratio Donut Chart
+            if (ratioChartInstance) {
+                ratioChartInstance.data.datasets[0].data = [totalExp, totalRev];
+                ratioChartInstance.update();
+            }
+
+            // Update Expense Category Breakdown
+            const catTotals = { Supplies:0, Rent:0, Payroll:0, Utility:0, Marketing:0, Equipment:0, Other:0 };
+            current.expenses.forEach(e => {
+                if (catTotals[e.category] !== undefined) catTotals[e.category] += parseFloat(e.price) || 0;
+                else catTotals.Other += parseFloat(e.price) || 0;
+            });
+
+            if (categoryChartInstance) {
+                categoryChartInstance.data.datasets[0].data = Object.values(catTotals);
+                categoryChartInstance.update();
+            }
+
+            // Update Yearly Line Chart & Metrics across all 12 months
+            updateYearlyProgressAndKPIs();
+        }
+
+        function updateYearlyProgressAndKPIs() {
+            let ytdRev = 0;
+            let ytdExp = 0;
+            const monthlyData = [];
+
+            for (let i = 0; i < 12; i++) {
+                const monthExp = appData.statements[i].expenses.reduce((a, c) => a + (parseFloat(c.price) || 0), 0);
+                const monthRev = appData.statements[i].revenues.reduce((a, c) => a + (parseFloat(c.price) || 0), 0);
+                const monthNet = monthRev - monthExp;
+
+                ytdExp += monthExp;
+                ytdRev += monthRev;
+                monthlyData.push(monthNet);
+            }
+
+            const ytdEquity = ytdRev - ytdExp;
+            const profitMargin = ytdRev > 0 ? ((ytdEquity / ytdRev) * 100).toFixed(1) : 0;
+
+            const fmt = (num) => '₱' + num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('kpiYtdRevenue').innerText = fmt(ytdRev);
+            document.getElementById('kpiYtdExpenses').innerText = fmt(ytdExp);
+            document.getElementById('kpiNetEquity').innerText = fmt(ytdEquity);
+            document.getElementById('kpiProfitMargin').innerText = `${profitMargin}%`;
+
+            if (yearlyLineChartInstance) {
+                yearlyLineChartInstance.data.datasets[0].data = monthlyData;
+                yearlyLineChartInstance.update();
+            }
+
+            renderSavedMonthCards();
+        }
+
+        // ==========================================
+        // CHART INITIALIZATIONS
+        // ==========================================
+        function initCharts() {
+            // Ratio Chart
+            const ctxRatio = document.getElementById('ratioChart').getContext('2d');
+            ratioChartInstance = new Chart(ctxRatio, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Expenses', 'Revenues'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['#f43f5e', '#10b981'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    cutout: '75%'
+                }
+            });
+
+            // Category Breakdown Chart
+            const ctxCat = document.getElementById('categoryChart').getContext('2d');
+            categoryChartInstance = new Chart(ctxCat, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Supplies', 'Rent', 'Payroll', 'Utility', 'Marketing', 'Equipment', 'Other'],
+                    datasets: [{
+                        data: [0,0,0,0,0,0,0],
+                        backgroundColor: ['#f43f5e', '#6366f1', '#a855f7', '#06b6d4', '#f59e0b', '#10b981', '#64748b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    cutout: '65%'
+                }
+            });
+
+            // Yearly Progress Line Chart
+            const ctxYearly = document.getElementById('yearlyLineChart').getContext('2d');
+            yearlyLineChartInstance = new Chart(ctxYearly, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: "Net Equity (₱)",
+                        data: [0,0,0,0,0,0,0,0,0,0,0,0],
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#818cf8'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        function renderSavedMonthCards() {
+            const grid = document.getElementById('monthlySavedGrid');
+            grid.innerHTML = '';
+
+            const fmt = (num) => '₱' + num.toLocaleString('en-PH', { minimumFractionDigits: 0 });
+
+            for (let i = 0; i < 12; i++) {
+                const exp = appData.statements[i].expenses.reduce((a, c) => a + (parseFloat(c.price) || 0), 0);
+                const rev = appData.statements[i].revenues.reduce((a, c) => a + (parseFloat(c.price) || 0), 0);
+                const net = rev - exp;
+
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-2xl glass-card border ${i === appData.activeMonthIndex ? 'border-indigo-500 bg-indigo-950/20' : 'border-slate-800'} transition cursor-pointer hover:border-slate-700`;
+                card.onclick = () => { changeActiveMonth(i); switchScreen(3); };
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-bold text-slate-300">${MONTH_NAMES[i].substring(0,3)}</span>
+                        <span class="text-[10px] ${net >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold">${net >= 0 ? '+' : ''}${fmt(net)}</span>
+                    </div>
+                    <div class="text-[10px] text-slate-500 space-y-0.5">
+                        <p class="flex justify-between"><span>R:</span> <span class="text-slate-300">${fmt(rev)}</span></p>
+                        <p class="flex justify-between"><span>E:</span> <span class="text-slate-300">${fmt(exp)}</span></p>
+                    </div>
+                `;
+                grid.appendChild(card);
+            }
+        }
+
+        function saveAndArchiveCurrentMonth() {
+            alert(`Month of ${MONTH_NAMES[appData.activeMonthIndex]} 2026 has been synchronized and archived successfully!`);
+            updateCalculationsAndCharts();
+        }
+
+        // ==========================================
+        // BUSINESS NOTES & CHECKLIST (SCREEN 4)
+        // ==========================================
+        function createNewNote() {
+            const newNote = {
+                id: Date.now(),
+                title: "UNTITLED NOTE",
+                content: "",
+                priority: "general",
+                checklist: []
+            };
+            appData.notes.unshift(newNote);
+            appData.activeNoteId = newNote.id;
+            renderNotesList();
+            renderActiveNote();
+            saveToLocalStorage();
+        }
+
+        function renderNotesList() {
+            const container = document.getElementById('notesListContainer');
+            const search = document.getElementById('noteSearchInput').value.toLowerCase();
+            container.innerHTML = '';
+
+            const filtered = appData.notes.filter(n => n.title.toLowerCase().includes(search) || n.content.toLowerCase().includes(search));
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-6">No notes found. Create one!</div>`;
+                return;
+            }
+
+            filtered.forEach(note => {
+                const item = document.createElement('div');
+                const isActive = note.id === appData.activeNoteId;
+
+                let tagColor = 'bg-slate-800 text-slate-400';
+                if (note.priority === 'urgent') tagColor = 'bg-rose-500/20 text-rose-300 border border-rose-500/30';
+                else if (note.priority === 'idea') tagColor = 'bg-amber-500/20 text-amber-300 border border-amber-500/30';
+                else if (note.priority === 'meeting') tagColor = 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
+
+                item.className = `p-3 rounded-2xl cursor-pointer transition flex flex-col space-y-1 ${isActive ? 'bg-indigo-600/20 border border-indigo-500/50' : 'bg-slate-900/60 border border-slate-800/80 hover:bg-slate-900'}`;
+                item.onclick = () => { appData.activeNoteId = note.id; renderNotesList(); renderActiveNote(); };
+
+                item.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-xs text-white truncate max-w-[140px]">${note.title || 'UNTITLED'}</span>
+                        <span class="text-[9px] uppercase px-1.5 py-0.5 rounded ${tagColor}">${note.priority}</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 truncate">${note.content || 'Empty note content...'}</p>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function renderActiveNote() {
+            const note = appData.notes.find(n => n.id === appData.activeNoteId);
+            if (!note) {
+                document.getElementById('noteTitleInput').value = '';
+                document.getElementById('noteContentInput').value = '';
+                document.getElementById('noteChecklistContainer').innerHTML = '';
+                return;
+            }
+
+            document.getElementById('noteTitleInput').value = note.title;
+            document.getElementById('noteContentInput').value = note.content;
+            document.getElementById('notePrioritySelect').value = note.priority || 'general';
+
+            renderChecklist(note);
+        }
+
+        function updateActiveNote() {
+            const note = appData.notes.find(n => n.id === appData.activeNoteId);
+            if (!note) return;
+
+            note.title = document.getElementById('noteTitleInput').value;
+            note.content = document.getElementById('noteContentInput').value;
+            note.priority = document.getElementById('notePrioritySelect').value;
+
+            renderNotesList();
+            saveToLocalStorage();
+        }
+
+        function deleteActiveNote() {
+            if (!appData.activeNoteId) return;
+            appData.notes = appData.notes.filter(n => n.id !== appData.activeNoteId);
+            appData.activeNoteId = appData.notes.length > 0 ? appData.notes[0].id : null;
+            renderNotesList();
+            renderActiveNote();
+            saveToLocalStorage();
+        }
+
+        function renderChecklist(note) {
+            const container = document.getElementById('noteChecklistContainer');
+            container.innerHTML = '';
+
+            (note.checklist || []).forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = "flex items-center space-x-2 text-xs";
+                div.innerHTML = `
+                    <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleChecklistItem(${idx})" class="rounded border-slate-700 text-indigo-600 focus:ring-0">
+                    <input type="text" value="${item.text}" onchange="updateChecklistItem(${idx}, this.value)" class="bg-transparent text-slate-300 focus:outline-none w-full ${item.done ? 'line-through text-slate-500' : ''}">
+                    <button onclick="removeChecklistItem(${idx})" class="text-slate-600 hover:text-rose-400"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                `;
+                container.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        function addChecklistItem() {
+            const note = appData.notes.find(n => n.id === appData.activeNoteId);
+            if (!note) return;
+            if (!note.checklist) note.checklist = [];
+            note.checklist.push({ text: "New Task Item", done: false });
+            renderChecklist(note);
+            saveToLocalStorage();
+        }
+
+        function toggleChecklistItem(idx) {
+            const note = appData.notes.find(n => n.id === appData.activeNoteId);
+            if (note && note.checklist[idx]) {
+                note.checklist[idx].done = !note.checklist[idx].done;
+                renderChecklist(note);
+                saveToLocalStorage();
+            }
+        }
+
+        function updateChecklistItem(idx, val) {
+            const note = appData.notes.find(n => n.id === appData.activeNoteId);
+            if (note && note.checklist[idx]) {
+                note.checklist[idx].text = val;
+                saveToLocalStorage();
+            }
+        }
+
+        function removeChecklistItem(idx) {
+            const note = appData.notes.find(n => n.id === appData.activeNoteId);
+            if (note && note.checklist[idx]) {
+                note.checklist.splice(idx, 1);
+                renderChecklist(note);
+                saveToLocalStorage();
+            }
+        }
+
+        // ==========================================
+        // HYBRID CALENDAR (SCREEN 5)
+        // ==========================================
+        function renderCalendar() {
+            document.getElementById('calendarMonthYear').innerText = `${MONTH_NAMES[calCurrentMonth]} ${calCurrentYear}`;
+            const daysGrid = document.getElementById('calendarDaysGrid');
+            daysGrid.innerHTML = '';
+
+            const firstDay = new Date(calCurrentYear, calCurrentMonth, 1).getDay();
+            const totalDays = new Date(calCurrentYear, calCurrentMonth + 1, 0).getDate();
+
+            // Empty Slots
+            for (let i = 0; i < firstDay; i++) {
+                daysGrid.appendChild(document.createElement('div'));
+            }
+
+            // Calendar Days
+            for (let d = 1; d <= totalDays; d++) {
+                const dayStr = d < 10 ? `0${d}` : `${d}`;
+                const mStr = (calCurrentMonth + 1) < 10 ? `0${calCurrentMonth + 1}` : `${calCurrentMonth + 1}`;
+                const dateKey = `${calCurrentYear}-${mStr}-${dayStr}`;
+
+                const hasEvents = appData.calendarEvents[dateKey] && appData.calendarEvents[dateKey].length > 0;
+                const isSelected = dateKey === selectedCalDateKey;
+
+                const dayCard = document.createElement('div');
+                dayCard.className = `p-2 rounded-xl text-center cursor-pointer transition flex flex-col items-center justify-between h-10 ${isSelected ? 'bg-indigo-600 text-white font-bold shadow-md' : 'bg-slate-900/60 hover:bg-slate-800 text-slate-300'}`;
+                dayCard.onclick = () => selectCalendarDate(dateKey);
+
+                dayCard.innerHTML = `
+                    <span>${d}</span>
+                    ${hasEvents ? `<span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-indigo-400'}"></span>` : ''}
+                `;
+                daysGrid.appendChild(dayCard);
+            }
+
+            renderCalendarEvents();
+        }
+
+        function changeCalMonth(delta) {
+            calCurrentMonth += delta;
+            if (calCurrentMonth < 0) { calCurrentMonth = 11; calCurrentYear--; }
+            if (calCurrentMonth > 11) { calCurrentMonth = 0; calCurrentYear++; }
+            renderCalendar();
+        }
+
+        function selectCalendarDate(dateKey) {
+            selectedCalDateKey = dateKey;
+            renderCalendar();
+        }
+
+        function renderCalendarEvents() {
+            document.getElementById('selectedCalDateLabel').innerText = selectedCalDateKey;
+            const container = document.getElementById('calendarEventsList');
+            container.innerHTML = '';
+
+            const events = appData.calendarEvents[selectedCalDateKey] || [];
+            if (events.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 italic">No events scheduled for this day.</p>`;
+                return;
+            }
+
+            events.forEach((ev, idx) => {
+                const item = document.createElement('div');
+                item.className = "p-2 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs";
+                item.innerHTML = `
+                    <span class="text-slate-200">${ev.title}</span>
+                    <button onclick="deleteCalendarEvent(${idx})" class="text-slate-500 hover:text-rose-400"><i data-lucide="trash" class="w-3.5 h-3.5"></i></button>
+                `;
+                container.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        function addCalendarEventPrompt() {
+            const title = prompt(`Enter event/task title for ${selectedCalDateKey}:`);
+            if (title) {
+                if (!appData.calendarEvents[selectedCalDateKey]) {
+                    appData.calendarEvents[selectedCalDateKey] = [];
+                }
+                appData.calendarEvents[selectedCalDateKey].push({ id: Date.now(), title: title });
+                renderCalendar();
+                saveToLocalStorage();
+            }
+        }
+
+        function deleteCalendarEvent(idx) {
+            if (appData.calendarEvents[selectedCalDateKey]) {
+                appData.calendarEvents[selectedCalDateKey].splice(idx, 1);
+                renderCalendar();
+                saveToLocalStorage();
+            }
+        }
+
+        // ==========================================
+        // INVOICE GENERATOR & MODAL
+        // ==========================================
+        function generateInvoice(title, category, price) {
+            document.getElementById('invBusinessName').innerText = `${appData.userName}'s Business Suite`;
+            document.getElementById('invDate').innerText = `Date: 2026-09-09`;
+            document.getElementById('invNumber').innerText = `INV-${Math.floor(10000 + Math.random() * 90000)}`;
+            document.getElementById('invTitle').innerText = title || "Revenue Item";
+            document.getElementById('invCategory').innerText = category || "General";
+            document.getElementById('invAmount').innerText = '₱' + (parseFloat(price) || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 });
+
+            document.getElementById('invoiceModal').classList.remove('hidden');
+        }
+
+        function closeInvoiceModal() {
+            document.getElementById('invoiceModal').classList.add('hidden');
+        }
+
+        // ==========================================
+        // SECURITY PIN MODAL
+        // ==========================================
+        function openPinModal() {
+            document.getElementById('pinInput').value = '';
+            document.getElementById('pinModal').classList.remove('hidden');
+        }
+
+        function closePinModal() {
+            document.getElementById('pinModal').classList.add('hidden');
+        }
+
+        function saveOrVerifyPin() {
+            const pin = document.getElementById('pinInput').value;
+            if (pin.length === 4) {
+                appData.securityPin = pin;
+                saveToLocalStorage();
+                closePinModal();
+                alert("Security PIN saved!");
+                document.getElementById('pinStatusBadge').classList.remove('hidden');
+            } else {
+                alert("Please enter a 4-digit numeric PIN.");
+            }
+        }
+
+        // ==========================================
+        // LOCAL STORAGE & DATA IMPORT/EXPORT
+        // ==========================================
+        function saveToLocalStorage() {
+            localStorage.setItem('executive_suite_app_data', JSON.stringify(appData));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('executive_suite_app_data');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    appData = { ...appData, ...parsed };
+                } catch (e) {
+                    console.error("Could not parse saved data", e);
+                }
+            }
+        }
+
+        function exportDataJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `ExecutiveSuite_Backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        }
+
+        function importDataJSON(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const imported = JSON.parse(e.target.result);
+                        appData = { ...appData, ...imported };
+                        saveToLocalStorage();
+                        renderAllScreens();
+                        alert("Data backup successfully restored!");
+                    } catch (err) {
+                        alert("Invalid JSON data file.");
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function confirmResetData() {
+            if (confirm("Are you sure you want to clear all cash flow entries, notes, and calendar items? This cannot be undone.")) {
+                localStorage.removeItem('executive_suite_app_data');
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
